@@ -1,6 +1,6 @@
 import { Table, Column, Model, DataType } from 'sequelize-typescript';
 
-@Table({ modelName: 'Checkpoint', tableName: 'checkpoint' })
+@Table({ modelName: 'Checkpoint', tableName: 'checkpoint', timestamps: false })
 class Checkpoint extends Model {
   @Column({ type: DataType.STRING, primaryKey: true, field: 'id' })
   id!: string;

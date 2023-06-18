@@ -5,7 +5,7 @@ class Inventory extends Model {
   @Column({ type: DataType.INTEGER, primaryKey: true, autoIncrement: true, field: 'id' })
   id!: number;
 
-  @Column({ type: DataType.UUID, field: 'productId', allowNull: false })
+  @Column({ type: DataType.UUID, field: 'product_id', allowNull: false })
   productId!: string;
 
   @Column({ type: DataType.INTEGER, field: 'quantity', allowNull: false })
