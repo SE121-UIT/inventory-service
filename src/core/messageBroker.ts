@@ -1,6 +1,7 @@
 import amqplib, { Channel } from 'amqplib';
 import createError from 'http-errors';
 import { Inventory } from '../models';
+import { deductInventoryFromCart } from '../services/inventory.service';
 
 const channelSingleton = (() => {
   let instance: Channel | null = null;
@@ -39,6 +40,11 @@ export const publishMessage = (channel: Channel, routingKey: string, msg: string
   console.log('Sent', msg);
 };
 
+export interface ProductItem {
+  productId: string;
+  quantity: number;
+}
+
 export type EventBroker = {
   name: EventTypeBroker;
   data: object | undefined;
@@ -50,9 +56,22 @@ export type ProductIdCheckEvent = EventBroker & {
   };
 };
 
-export type ProductIdCheckReplyEvent = Event & {
+export type ProductIdCheckReplyEvent = EventBroker & {
   data: {
     productId: string;
+    result: boolean;
+  };
+};
+
+export type CartConfirmationEvent = EventBroker & {
+  data: {
+    productItems: ProductItem[];
+  };
+};
+
+export type CartConfirmationReplyEvent = EventBroker & {
+  data: {
+    message: string;
     result: boolean;
   };
 };
@@ -82,35 +101,57 @@ export const subscribeMessage = async (channel: Channel, routingKey: string) => 
 
         switch (eventPayload.name) {
           case EventTypeBroker.PRODUCT_ID_CHECK:
-            const eventData: ProductIdCheckEvent = JSON.parse(msg.content.toString());
-            const productId = eventData.data.productId;
+            {
+              const eventData: ProductIdCheckEvent = JSON.parse(msg.content.toString());
+              const productId = eventData.data.productId;
 
-            const productFind = await Inventory.findOne({
-              where: {
-                productId,
-              },
-            });
+              const productFind = await Inventory.findOne({
+                where: {
+                  productId,
+                },
+              });
 
-            const payload: EventBroker = {
-              name: EventTypeBroker.PRODUCT_ID_CHECK_REPLY,
-              data: {
-                productId,
-                result: !!productFind,
-              },
-            };
+              const payload: ProductIdCheckReplyEvent = {
+                name: EventTypeBroker.PRODUCT_ID_CHECK_REPLY,
+                data: {
+                  productId,
+                  result: !!productFind,
+                },
+              };
 
-            console.log(payload);
+              const message = JSON.stringify(payload);
+              const replyTo = msg.properties.replyTo;
+              const correlationId = msg.properties.correlationId;
 
-            const message = JSON.stringify(payload);
-            const replyTo = msg.properties.replyTo;
-            const correlationId = msg.properties.correlationId;
-
-            channel.sendToQueue(replyTo, Buffer.from(message), {
-              correlationId,
-            });
+              channel.sendToQueue(replyTo, Buffer.from(message), {
+                correlationId,
+              });
+            }
 
             break;
           case EventTypeBroker.CART_CONFIRMATION:
+            {
+              const eventData: CartConfirmationEvent = JSON.parse(msg.content.toString());
+              const productItems = eventData.data.productItems;
+
+              const { message, result } = await deductInventoryFromCart(productItems);
+
+              const payload: CartConfirmationReplyEvent = {
+                name: EventTypeBroker.CART_CONFIRMATION_REPLY,
+                data: {
+                  message,
+                  result,
+                },
+              };
+
+              const replyTo = msg.properties.replyTo;
+              const correlationId = msg.properties.correlationId;
+
+              channel.sendToQueue(replyTo, Buffer.from(JSON.stringify(payload)), {
+                correlationId,
+              });
+            }
+
             break;
           default:
             throw createError.InternalServerError('EventBroker not map');
