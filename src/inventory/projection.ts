@@ -95,7 +95,7 @@ export const projectProductAddQuantity = async (
     await t.commit();
   } catch (error) {
     await t.rollback();
-    throw createError.InternalServerError('UNKNOW ERROR');
+    throw error;
   }
 };
 
@@ -139,7 +139,7 @@ export const projectProductDeductQuantity = async (
     await t.commit();
   } catch (error) {
     await t.rollback();
-    throw createError.InternalServerError('UNKNOW ERROR');
+    throw error;
   }
 };
 
@@ -175,7 +175,7 @@ export const projectProductDeleted = async (
     await t.commit();
   } catch (error) {
     await t.rollback();
-    throw createError.InternalServerError('UNKNOW ERROR');
+    throw error;
   }
 };
 
@@ -219,6 +219,6 @@ export const projectProductUpdateInfo = async (
     await t.commit();
   } catch (error) {
     await t.rollback();
-    throw createError.InternalServerError('UNKNOW ERROR');
+    throw error;
   }
 };
