@@ -2,6 +2,7 @@ import express, { Application, NextFunction, Router, Request, Response } from 'e
 import http from 'http';
 import { createChannel, subscribeMessage } from './messageBroker';
 import { sequelize } from '../configs/sequelize';
+import { INVENTORY_SERVICE } from '../configs';
 import createError, { HttpError } from 'http-errors';
 import { ResJSON } from '../inventory/routes';
 
@@ -45,5 +46,5 @@ export const startAPI = async (router: Router) => {
   });
 
   const channel = await createChannel();
-  subscribeMessage(channel, 'INVENTORY_SERVICE');
+  subscribeMessage(channel, INVENTORY_SERVICE);
 };

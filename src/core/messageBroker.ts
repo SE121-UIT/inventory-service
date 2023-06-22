@@ -2,6 +2,7 @@ import amqplib, { Channel } from 'amqplib';
 import createError from 'http-errors';
 import { Inventory } from '../models';
 import { deductInventoryFromCart } from '../services/inventory.service';
+import { RABBIT_MQ_URL, EXCHANGE_NAME } from '../configs';
 
 const channelSingleton = (() => {
   let instance: Channel | null = null;
@@ -9,11 +10,9 @@ const channelSingleton = (() => {
   async function createChannel(): Promise<Channel> {
     try {
       if (!instance) {
-        const connection = await amqplib.connect(
-          'amqps://nlpghfsl:tAsRiPJT9G5avar1fwH-ahUvJkRncdRX@gerbil.rmq.cloudamqp.com/nlpghfsl'
-        );
+        const connection = await amqplib.connect(RABBIT_MQ_URL);
         instance = await connection.createChannel();
-        await instance.assertQueue('ONLINE_SHOPPING_CART', {
+        await instance.assertQueue(EXCHANGE_NAME, {
           durable: true,
         });
       }
@@ -36,7 +35,7 @@ const channelSingleton = (() => {
 export const createChannel = channelSingleton.getInstance;
 
 export const publishMessage = (channel: Channel, routingKey: string, msg: string) => {
-  channel.publish('ONLINE_SHOPPING_CART', routingKey, Buffer.from(msg));
+  channel.publish(EXCHANGE_NAME, routingKey, Buffer.from(msg));
   console.log('Sent', msg);
 };
 
@@ -84,14 +83,14 @@ export enum EventTypeBroker {
 }
 
 export const subscribeMessage = async (channel: Channel, routingKey: string) => {
-  await channel.assertExchange('ONLINE_SHOPPING_CART', 'direct', {
+  await channel.assertExchange(EXCHANGE_NAME, 'direct', {
     durable: true,
   });
 
   const q = await channel.assertQueue('', { exclusive: true });
   console.log(` Waiting for messages in queue: ${q.queue}`);
 
-  channel.bindQueue(q.queue, 'ONLINE_SHOPPING_CART', routingKey);
+  channel.bindQueue(q.queue, EXCHANGE_NAME, routingKey);
   channel.consume(
     q.queue,
     async (msg) => {

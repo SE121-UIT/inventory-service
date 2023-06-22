@@ -4,24 +4,26 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "npx nodemon",
+    "start:dev": "npx nodemon",
+    "start": "npm run build && node dist/index.js",
+    "build": "rimraf ./dist && tsc",
     "test": "node dist/index.js",
     "build:ts:watch": "tsc  --watch"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/amqplib": "^0.10.1",
+    "@types/express": "^4.17.17",
+    "@types/http-errors": "^2.0.1",
+    "@types/node": "^20.3.1",
+    "@types/pg": "^8.10.2",
+    "@types/uuid": "^9.0.2",
     "ts-node": "^10.9.1",
     "typescript": "^5.0.3"
   },
   "dependencies": {
     "@eventstore/db-client": "^5.0.1",
-    "@types/amqplib": "^0.10.1",
-    "@types/express": "^4.17.17",
-    "@types/http-errors": "^2.0.1",
-    "@types/node": "^18.15.11",
-    "@types/pg": "^8.10.2",
-    "@types/uuid": "^9.0.1",
     "amqplib": "^0.10.3",
     "dotenv": "^16.1.4",
     "express": "^4.18.2",
@@ -29,6 +31,7 @@
     "mongodb": "^5.1.0",
     "pg": "^8.11.0",
     "reflect-metadata": "^0.1.13",
+    "rimraf": "^5.0.1",
     "sequelize": "^6.31.0",
     "sequelize-typescript": "^2.1.5",
     "tsconfig-paths": "^4.2.0"
